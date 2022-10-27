@@ -1,0 +1,14 @@
+---
+layout: default
+title: Symfony - Tienda virtual paso a paso
+---
+<h1> Symfony - Tienda virtual paso a paso</h1>        
+    <blockquote>
+      En este tutorial vamos a aprender a crear una tienda virtual paso a paso.
+    </blockquote>
+<ol class='portada'> 
+  {% for post in site.posts reversed %}
+      <li><h4><a href="{{site.baseurl}}{{ post.url }}">{{ post.title }}</a></h4></li>
+{% endfor %}
+</ol>
+
