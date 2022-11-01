@@ -300,7 +300,7 @@ Un servicio es una forma de compartir código entre varias partes de la aplicaci
    
        public function __construct(ManagerRegistry $doctrine)
        {
-           //Como hace falta acceder a ManagerRegistry lo inyectamos en el controlador
+           //Como hace falta acceder a ManagerRegistry lo inyectamos en el constructor
            $this->doctrine = $doctrine;
        }
        public function getProducts(): ?array{
