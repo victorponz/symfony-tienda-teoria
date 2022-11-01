@@ -261,7 +261,7 @@ Procedemos de la misma manera para el controlador `team`
 
 > -reto-**Reto**
 >
-> Crea el panel de control para administrar los productos. La entidad `Product` debe tener los atributos `name`, `photo` y un `price`, este último de tipo **float**
+> Crea el panel de control para administrar los productos. La entidad `Product` debe tener los atributos `name`, `photo` y `price`, este último de tipo **float**
 
 Una vez creada la entidad, carga el siguiente SQL con los productos:
 
