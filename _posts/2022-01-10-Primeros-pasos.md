@@ -100,7 +100,70 @@ Ahora ya podemos eliminar el archivo `public/index.html`
 
 
 
+## 1.4 Navegación
+
+Ahora mismo la navegación apunta a las páginas `.html` y hemos de modificarla para que apunte a las nuevas rutas.
+
+![image-20221027125437620](/symfony-tienda-teoria/assets/img/image-20221027125437620.png)
 
 
 
+Primero vamos a crea una plantilla para el menú de navegación de tal forma que las plantillas queden más estructuradas. A esta plantilla la llamamos `partials/_navigation.html.twig`. El prefijo `_` es opcional, pero es una convención utilizada para diferenciar mejor entre plantillas completas y fragmentos de plantilla).
+
+Y la incluimos en `base.html.twig`
+
+{% raw %}
+
+```twig
+{{ include ('partials/_navigation.html.twig')}}
+```
+
+{% endraw %}
+
+{% raw %}
+
+```twig
+<div class="navbar-nav ms-auto py-0">
+                <a href="{{ path('index') }}" class="nav-item nav-link active">Home</a>
+                <a href="{{ path('about') }}" class="nav-item nav-link">About</a>
+                <a href="{{ path('service') }}" class="nav-item nav-link">Service</a>
+                <a href="{{ path('product') }}" class="nav-item nav-link">Product</a>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
+                    <div class="dropdown-menu m-0">
+                        <a href="{{ path('price') }}" class="dropdown-item">Pricing Plan</a>
+                        <a href="{{ path('team') }}" class="dropdown-item">The Team</a>
+                        <a href="{{ path('testimonial') }}" class="dropdown-item">Testimonial</a>
+                        <a href="{{ path('blog') }}" class="dropdown-item">Blog Grid</a>
+                        <a href="{{ path('detail') }}" class="dropdown-item">Blog Detail</a>
+                    </div>
+                </div>
+                <a href="{{ path('contact') }}" class="nav-item nav-link nav-contact bg-primary text-white px-5 ms-lg-5">Contact <i class="bi bi-arrow-right"></i></a>
+            </div>
+```
+
+{% endraw %}
+
+Pero ahora ocurre que siempre está activada la ruta a `home`
+
+{% raw %}
+
+```twig
+<a href="{{ path('index') }}" class="nav-item nav-link active">Home</a>
+```
+
+{% endraw %}
+
+Vamos a arreglarlo obteniendo la ruta actual mediante `app.request.attributes.get('_route')` 
+
+{% raw %}
+
+```twig
+<a href="{{ path('index') }}" class="nav-item nav-link {{ (app.request.attributes.get('_route') == 'index')  ? 'active': ''}}">Home</a>
+<a href="{{ path('about') }}" class="nav-item nav-link {{ (app.request.attributes.get('_route') == 'about')  ? 'active': ''}}">About</a>
+<a href="{{ path('service') }}" class="nav-item nav-link {{ (app.request.attributes.get('_route') == 'service')  ? 'active': ''}}">Service</a>
+<a href="{{ path('product') }}" class="nav-item nav-link {{ (app.request.attributes.get('_route') == 'product')  ? 'active': ''}}">Product</a>
+```
+
+{% endraw %}
 
