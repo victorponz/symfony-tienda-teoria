@@ -6,8 +6,9 @@ layout: post
 categories: parte1
 conToc: true
 permalink: panel-de-control
-
 ---
+
+![](/symfony-tienda-teoria/assets/img/panel-de-control-reducido.gif)
 
 ## ¿Qué aprenderemos?
 
