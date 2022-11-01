@@ -208,7 +208,7 @@ public function about(ManagerRegistry $doctrine): Response
 }
 ```
 
-Pero como veis es el mismo código que en el controlador `index` y hemos de intentar siempre no repetirnos (**DRY** Don't Repeat Yourself). Así que vamos a usar [Controladores Embebidos](https://symfony.com/doc/current/templates.html#embedding-controllers). Creamos un método que obtenga los miembros del equipo y que además renderiza la plantilla:
+> -danger-Pero como veis es el mismo código que en el controlador `index` y hemos de intentar siempre no repetirnos (**DRY** Don't Repeat Yourself). Así que vamos a usar [Controladores Embebidos](https://symfony.com/doc/current/templates.html#embedding-controllers). Creamos un método que obtenga los miembros del equipo y que además renderiza la plantilla:
 
 ```php
 public function teamTemplate(ManagerRegistry $doctrine): Response
