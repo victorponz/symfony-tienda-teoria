@@ -1,11 +1,11 @@
 ---
 typora-copy-images-to: ../assets/img/
 typora-root-url: ../../
-title: Primeros pasos
+title: Panel de control
 layout: post
 categories: parte1
 conToc: true
-permalink: primeros-pasos
+permalink: panel-de-control
 
 ---
 
