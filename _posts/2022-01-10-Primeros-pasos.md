@@ -88,6 +88,18 @@ Si todo ha ido bien, ya podremos visitar la página sin necesidad de `index.html
 
 ![index](/symfony-tienda-teoria/assets/img/image-20221027103300754.png)
 
+En la plantilla base hemos de utilizar la instrucción `asset` de twig para renderizar correctamente los archivos estáticos independientemente de la url base.
+
+Por ejemplo:
+
+{% raw %}
+
+```twig
+<link href="{{asset('lib/flaticon/font/flaticon.css')}}" rel="stylesheet">
+```
+
+{% endraw %}
+
 Ahora ya podemos eliminar el archivo `public/index.html`
 
 > -reto-
