@@ -107,9 +107,11 @@ Como enlace usaremos el propio botón de ver producto al que le inyectaremos com
 
 {% endraw %}
 
-Fíjate que le hemos añadido un atributo llamado `data-id` y le hemos puesto una clase llamada `open-info-product` para poder seleccionar con jquery todos los enlaces a ver productos.
+Fíjate que le hemos añadido un atributo llamado `data-id` y le hemos puesto una clase llamada `open-info-product` para poder seleccionar con jquery todos los enlaces a ver productos y obtener el id del producto a partir de `data-id`
 
-Ahora vamos a dibujar la ventana creando un partial llamado `_infoProducto.html.twig` y siguiendo las instrucciones de Bootstrap para crear [ventanas modales](https://getbootstrap.com/docs/4.0/components/modal/).
+> -info-Cuando añadimos un atributo con datos a un elemento siempre se prefija con `data-`
+
+Ahora vamos a dibujar la ventana creando un partial llamado `_infoProducto.html.twig` y seguimos las instrucciones de Bootstrap para crear [ventanas modales](https://getbootstrap.com/docs/4.0/components/modal/).
 
 ```html
 <div id="infoProduct" class="modal" tabindex="-1" role="dialog">
@@ -142,9 +144,9 @@ Ahora vamos a dibujar la ventana creando un partial llamado `_infoProducto.html.
 
 En esta plantilla lo que realmente importa son los elementos con los id's: `productName`, `productImage` y `productPrice` ya que son los elementos que reemplazaremos con los devueltos por la api.
 
-Esta plantilla la incluimos dentro del partial que muestra el listado de productos.
+Esta plantilla la incluimos dentro de `base.html.twig` para que esté disponible en todas las rutas.
 
-Ya por último un poco de javascritpt en `/public/js/app.js` 
+Ya por último un poco de `jquery` en `/public/js/app.js` 
 
 ```javascript
 //Immediately-Invoked Function Expression (IIFE)
@@ -154,7 +156,7 @@ Ya por último un poco de javascritpt en `/public/js/app.js`
       event.preventDefault();
       let id = $( this ).attr('data-id');
       let href = `/api/show/${id}`;
-      var jqxhr = $.get( href, function(data) {
+      var ajax = $.get( href, function(data) {
         $( infoProduct ).find( "#productName" ).text(data.name);
         $( infoProduct ).find( "#productPrice" ).text(data.price);
         $( infoProduct ).find( "#productImage" ).attr("src", "/img/" + data.photo);
@@ -168,8 +170,8 @@ Ya por último un poco de javascritpt en `/public/js/app.js`
 ```
 
 * `infoProduct` es el ID de la ventana modal 
-* `a.open-info-product` es el selector jquery para seleccionar todos los enlaces a ver producto
-* Hacemos una llamada asíncrona mediante `$.get`  y cuando se recibe la respuesta ya sólo queda sustituir los datos por los reales y mostrar la ventana modal.
+* `a.open-info-product` es el selector `jquery` para seleccionar todos los enlaces para ver el producto
+* Hacemos una llamada asíncrona ([ajax](https://es.wikipedia.org/wiki/AJAX)) mediante `$.get`  y cuando se recibe la respuesta ya sólo queda sustituir los datos por los reales y mostrar la ventana modal.
 * `closeInfoProduct` es la clase que tiene la ventana modal en el aspa y el botón para cerrar.
 
 Y ya sólo resta incluir este javascript en la plantilla base:
@@ -181,6 +183,278 @@ Y ya sólo resta incluir este javascript en la plantilla base:
 
 Hay que tener la precaución de cargar `app.js` después de jquery y bootstrap
 
-Y *voilà*, ya tenemos la ventana modal en funcionamiento:
+Y !*voilà*¡, ya tenemos la ventana modal en funcionamiento:
 
 ![](/symfony-tienda-teoria/assets/img/modal-productos.gif)
+
+## 3.2 Carro de la compra
+
+Vamos a crear una ventana modal para el carro de la compra. Al igual que antes nos hace falta:
+
+1. Gestionar el carro de la compra en la sesión
+2. Un `endpoint` en la api para añadir un producto al carro
+3. Un HTML para mostrar la ventana del carro
+4. Un poco de javascript para unirlo todo
+
+### 3.2.1 Gestión de la sesión
+
+Para gestionar la sesión usaremos la clase `Symfony\Component\HttpFoundation\RequestStack` que se la inyectaremos al constructor:
+
+```php
+public function __construct(RequestStack $requestStack)
+{
+	$this->requestStack = $requestStack;
+}
+```
+
+La forma de obtener la sesión es
+
+```php
+$session = $this->requestStack->getSession();
+```
+
+Para guardar los productos del carro vamos a crear un array asociativo que guardaremos en la sesión con el código de producto y la cantidad. Por ejemplo:
+
+```
+[	
+	3 => 1 //Cantidad 1 del producto 3
+	4 => 1 //Cantidad 1 del producto 4
+]
+```
+
+El código completo es el siguiente:
+
+```php
+<?php
+namespace App\Service;
+use Symfony\Component\HttpFoundation\RequestStack;
+
+class CartService{
+    private const KEY = '_cart';
+    private $requestStack;
+    public function __construct(RequestStack $requestStack)
+    {
+        $this->requestStack = $requestStack;
+    }
+    public function getSession()
+    {
+        return $this->requestStack->getSession();
+    }
+    public function getCart(): array {
+        return $this->getSession()->get(self::KEY, []);
+    }
+    public function add(int $id, int $quantity = 1){
+        //https://symfony.com/doc/current/session.html
+        $cart = $this->getCart();
+        $cart[$id] = $quantity;
+        $this->getSession()->set(self::KEY, $cart);
+    }
+}
+```
+
+Creamos un array que se almacena con la clave `_cart` 
+
+Aparte del esqueleto, la parte interesante es donde almacena el array en la clave:
+
+```php
+public function add(int $id, int $quantity = 1){
+    //https://symfony.com/doc/current/session.html
+    $cart = $this->getCart();
+    $cart[$id] = $quantity;
+    $this->getSession()->set(self::KEY, $cart);   
+}
+```
+
+### 3.2.2 Ruta
+
+Ahora creamos la ruta  `/cart/add/{id}`:
+
+```php
+....
+private $cart;
+
+//Le inyectamos CartService como una dependencia
+public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+{
+    $this->doctrine = $doctrine;
+    $this->repository = $doctrine->getRepository(Product::class);
+    $this->cart = $cart;
+}
+
+... 
+#[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+public function cart_add(int $id): Response
+{
+    $product = $this->repository->find($id);
+    if (!$product)
+        return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
+
+    $this->cart->add($id, 1);
+	
+    $data = [
+        "id"=> $product->getId(),
+        "name" => $product->getName(),
+        "price" => $product->getPrice(),
+        "photo" => $product->getPhoto(),
+        "quantity" => $this->cart->getCart()[$product->getId()]
+    ];
+    return new JsonResponse($data, Response::HTTP_OK);
+
+}
+```
+
+Hemos inyectado como una dependencia `CartService` en el constructor.
+
+Ahora probamos que la ruta funciona añadiendo manualmente un producto al carro [http://127.0.0.1:8080/cart/add/2](http://127.0.0.1:8080/cart/add/2)
+
+![image-20221118172647402](/symfony-tienda-teoria/assets/img/image-20221118172647402.png)
+
+### 3.2.4 Ventana modal
+
+Al igual que hicimos en el apartado 3.3.1, vamos a hacer una plantilla para mostrar el carro como una ventana modal:
+
+```html
+<div class="modal fade" id="cart-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title">Product added to cart</h5>
+        <button type="button" class="close closeCart" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id='data-container'>
+          <div class="row">
+            <div class="col-md-3">
+                <img class='img-thumbnail img-responsive' style='max-width:128px' src=''>
+            </div>
+            <div class="col-md-9">
+                <h4 class='name'></h4>
+                <input type='number' min='1' id='quantity' value=1><button class='update' class='btn'>Update</button>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-md-4" >
+              <a href="" class="btn btn-primary">View cart</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+> -reto-Haz la ventana modal para el carro
+
+![](/symfony-tienda-teoria/assets/img/modal-carro.gif)
+
+## 3.3 Página de contenido del carro
+
+![image-20221118182720880](/symfony-tienda-teoria/assets/img/image-20221118182720880.png)
+
+Ahora ya podemos crear la página con el contenido del carro.
+
+Como siempre empezamos por la ruta `/cart` que ya debe estar creada:
+
+```php
+#[Route('/', name: 'app_cart')]
+public function index(): Response
+{
+    return $this->render('cart/index.html.twig', [
+        'controller_name' => 'CartController',
+    ]);
+}
+```
+
+Y nos hará falta un método en el repositorio que nos devuelva todos los productos del carro:
+
+```php
+public function getFromCart(CartService $cart): array
+{
+    if (empty($cart->getCart())) {
+        return [];
+    }
+    $ids = implode(',', array_keys($cart->getCart()));
+
+    return $this->createQueryBuilder('p')
+        ->andWhere("p.id in ($ids)")
+        ->getQuery()
+        ->getResult();
+}
+```
+
+Estamos creando un consulta SQL `SELECT * FROM products WHERE id in (...)` y le pasamos todos los ids almacenados en el carro usando `array_keys` para obtener los id's e `implode` para unirlos en una cadena separados por comas.
+
+Y ahora lo usamos en la ruta:
+
+```php
+#[Route('/', name: 'app_cart')]
+public function index(): Response
+{
+    $products = $this->repository->getFromCart($this->cart);
+    return $this->render('cart/index.html.twig', [
+        'products' => '$products',
+    ]);
+}
+```
+
+> -reto- Crea un enlace en la navegación para el carro
+>
+> ![image-20221118181107578](/symfony-tienda-teoria/assets/img/image-20221118181107578.png)
+
+
+
+Ahora modificamos la plantilla, que en el original no aparecía y que podéis descargar desde [aquí](/tienda-symfony/assets/cart.html)
+
+> -reto-Crea la lógica para que se muestre el contenido del carro y que se actualice el total del mismo
+>
+> Os dejo todo el controlador
+>
+> ```php
+> #[Route('/', name: 'app_cart')]
+> public function index(): Response
+> {
+>     $products = $this->repository->getFromCart($this->cart);
+>     //hay que añadir la cantidad de cada producto
+>     $items = [];
+>     $totalCart = 0;
+>     foreach($products as $product){
+>         $item = [
+>             "id"=> $product->getId(),
+>             "name" => $product->getName(),
+>             "price" => $product->getPrice(),
+>             "photo" => $product->getPhoto(),
+>             "quantity" => $this->cart->getCart()[$product->getId()]
+>         ];
+>         $totalCart += $item["quantity"] * $item["price"];
+>         $items[] = $item;
+>     }
+> 
+>     return $this->render('cart/index.html.twig', ['items' => $items, 'totalCart' => $totalCart]);
+> }
+> ```
+
+## 3.4 Retoques finales
+
+![image-20221118190927675](/symfony-tienda-teoria/assets/img/image-20221118190927675.png)
+
+> -reto
+>
+> Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método:
+>
+> ```php
+> public function update(int $id, int $quantity = 1){
+> 	
+> }
+> ```
+
+
+
+---
+
+Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
+
+
