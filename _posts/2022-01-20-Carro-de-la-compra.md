@@ -178,10 +178,14 @@ Ya por último un poco de `jquery` en `/public/js/app.js`
 
 Y ya sólo resta incluir este javascript en la plantilla base:
 
+{% raw %}
+
 ```html
 <script src="{{asset('js/main.js')}}"></script>
 <script src="{{asset('js/app.js')}}"></script>
 ```
+
+{% endraw %}
 
 Hay que tener la precaución de cargar `app.js` después de jquery y bootstrap
 
