@@ -22,6 +22,8 @@ permalink: carro-de-la-compra
 
 6. A usar sesiones para persistir datos
 
+7. A usar servicios en plantillas
+
    
 
 ## 3.1 Información sobre el producto
@@ -246,7 +248,9 @@ class CartService{
     public function add(int $id, int $quantity = 1){
         //https://symfony.com/doc/current/session.html
         $cart = $this->getCart();
-        $cart[$id] = $quantity;
+        //Sólo añadimos si no lo está 
+        if (!array_key_exists($id, $cart))
+            $cart[$id] = $quantity;
         $this->getSession()->set(self::KEY, $cart);
     }
 }
@@ -260,8 +264,10 @@ Aparte del esqueleto, la parte interesante es donde almacena el array en la clav
 public function add(int $id, int $quantity = 1){
     //https://symfony.com/doc/current/session.html
     $cart = $this->getCart();
-    $cart[$id] = $quantity;
-    $this->getSession()->set(self::KEY, $cart);   
+    //Sólo añadimos si no lo está 
+    if (!array_key_exists($id, $cart))
+        $cart[$id] = $quantity;
+    $this->getSession()->set(self::KEY, $cart);  
 }
 ```
 
@@ -439,11 +445,13 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 
 ## 3.4 Retoques finales
 
+### 3.4.1 Actualizar el carro
+
 ![image-20221118190927675](/symfony-tienda-teoria/assets/img/image-20221118190927675.png)
 
 > -reto
 >
-> Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método:
+> Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método `update` en  `CartService`
 >
 > ```php
 > public function update(int $id, int $quantity = 1){
@@ -451,9 +459,56 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 > }
 > ```
 
+### 3.4.2 Eliminar un producto del carro
+
+Vamos a crear la ruta `cart/delete/{id}` y el método `delete` en `CartService` y el botón **Remove from Cart**
+
+![image-20221119170021148](/symfony-tienda-teoria/assets/img/image-20221119170021148.png)
+
+Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos por `jquery` el producto y actualizaremos el total del carro:
+
+> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa ` unset($cart[$id]);`
+>
+> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, `id='item-{{item.id}}'`
+>
+> Si quieres darle un efecto de jQuery al eliminar el contenedor usa
+>
+> ```javascript
+> $(`#item-${id}`).hide('slow', function(){ $(`#item-${id}`).remove(); });
+> ```
+>
+> Además debes actualizar el total del carro
+
+### 3.4.3 Total productos
+
+> -reto-Crea un método en `CartService` que devuelva el total de productos comprados. Al añadir, modificar y eliminar, debes actualizar el total de productos que debe aparecer en la barra de navegación.
+>
+> ![image-20221119174136033](/symfony-tienda-teoria/assets/img/image-20221119174136033.png)
+>
+> Como queremos acceder a un método de un servicio para acceder al método `totalItems` de `cartService`, en vez de pasarlo como un parámetro en cada uno de los métodos `render` de las rutas, vamos a definir este servicio como global para `twig`. Localiza el archivo `config/twig.yaml` y que quede así:
+>
+> ```yaml
+> twig:
+> default_path: '%kernel.project_dir%/templates'
+> globals:
+>     # the value is the service's id
+>     cart: '@App\Service\CartService'
+> when@test:
+> twig:
+>     strict_variables: true
+> ```
+>
+> Le estamos diciendo que cree la variable `cart` como una instancia de `App\Service\CartService`
+>
+> Además deberás actualizar el carro desde la ventana modal y desde Remove from Cart
+
+## 3.5 Gestión de usuarios
+
+Crea las rutas `register`, `login` y `logout`. Protege la ruta `/admin` para que sólo puedan acceder los usuarios con rol `ADMIN` y modifica la barra de navegación.
 
 
----
+
+
 
 Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
 
