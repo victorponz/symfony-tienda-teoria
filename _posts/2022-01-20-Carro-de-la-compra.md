@@ -32,7 +32,7 @@ Vamos a mostrar una ventana modal con la información del producto al pulsar sob
 
 ![image-20221103184949453](/symfony-tienda-teoria/assets/img/image-20221103184949453.png)
 
-El primer paso va a ser crear una ruta que devuelva los datos del producto en formato `JSON` para crea nuestra propia api rest. 
+El primer paso va a ser crear una ruta que devuelva los datos del producto en formato `JSON` para crear nuestra propia api `REST`. 
 
 Como siempre vamos a crear una nueva ruta en un nuevo controlador llamado `ApiController`
 
@@ -80,7 +80,7 @@ Más adelante trabajaremos más a fondo las API Rest.
 Por ejemplo, esta es la respuesta a una petición [http://127.0.0.1:8080/api/show/1](http://127.0.0.1:8080/api/show/1):
 
 ```json
-{"id":2,"name":"Producto 1","price":12.45,"photo":"product-1.png"}
+{"id":1,"name":"Producto 1","price":12.45,"photo":"product-1.png"}
 ```
 
 Que en el navegador Firefox luce así:
@@ -156,9 +156,9 @@ Ya por último un poco de `jquery` en `/public/js/app.js`
     const infoProduct = $("#infoProduct");
     $( "a.open-info-product" ).click(function(event) {
       event.preventDefault();
-      let id = $( this ).attr('data-id');
-      let href = `/api/show/${id}`;
-      var ajax = $.get( href, function(data) {
+      const id = $( this ).attr('data-id');
+      const href = `/api/show/${id}`;
+      $.get( href, function(data) {
         $( infoProduct ).find( "#productName" ).text(data.name);
         $( infoProduct ).find( "#productPrice" ).text(data.price);
         $( infoProduct ).find( "#productImage" ).attr("src", "/img/" + data.photo);
@@ -209,7 +209,7 @@ public function __construct(RequestStack $requestStack)
 }
 ```
 
-La forma de obtener la sesión es
+La forma de obtener la sesión es:
 
 ```php
 $session = $this->requestStack->getSession();
@@ -217,7 +217,7 @@ $session = $this->requestStack->getSession();
 
 Para guardar los productos del carro vamos a crear un array asociativo que guardaremos en la sesión con el código de producto y la cantidad. Por ejemplo:
 
-```
+```php
 [	
 	3 => 1 //Cantidad 1 del producto 3
 	4 => 1 //Cantidad 1 del producto 4
@@ -256,7 +256,7 @@ class CartService{
 }
 ```
 
-Creamos un array que se almacena con la clave `_cart` 
+Creamos un array que se almacena con la clave `_cart`.
 
 Aparte del esqueleto, la parte interesante es donde almacena el array en la clave:
 
@@ -308,8 +308,6 @@ public function cart_add(int $id): Response
 
 }
 ```
-
-Hemos inyectado como una dependencia `CartService` en el constructor.
 
 Ahora probamos que la ruta funciona añadiendo manualmente un producto al carro [http://127.0.0.1:8080/cart/add/2](http://127.0.0.1:8080/cart/add/2)
 
