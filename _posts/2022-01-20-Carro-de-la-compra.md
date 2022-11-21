@@ -469,9 +469,15 @@ Vamos a crear la ruta `cart/delete/{id}` y el método `delete` en `CartService` 
 
 Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos por `jquery` el producto y actualizaremos el total del carro:
 
-> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa ` unset($cart[$id]);`
+> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa `unset($cart[$id]);`
 >
-> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, `id='item-{{item.id}}'`
+> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, 
+{% raw %}
+```twig
+id='item-{{item.id}}'
+```
+{% endraw %}
+{% raw %}
 >
 > Si quieres darle un efecto de jQuery al eliminar el contenedor usa
 >
@@ -480,7 +486,7 @@ Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos
 > ```
 >
 > Además debes actualizar el total del carro
-
+{% endraw %}
 ### 3.4.3 Total productos
 
 > -reto-Crea un método en `CartService` que devuelva el total de productos comprados. Al añadir, modificar y eliminar, debes actualizar el total de productos que debe aparecer en la barra de navegación.
