@@ -277,40 +277,56 @@ public function add(int $id, int $quantity = 1){
 
 ### 3.2.2 Ruta
 
-Ahora creamos la ruta  `/cart/add/{id}`:
+Ahora creamos el controlador para el carro y la creamos la ruta  `/cart/add/{id}`:
 
 ```php
-....
-private $cart;
+<?php
 
-//Le inyectamos CartService como una dependencia
-public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+namespace App\Controller;
+
+use App\Entity\Product;
+use App\Service\CartService;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route(path:'/cart')]
+class CartController extends AbstractController
 {
-    $this->doctrine = $doctrine;
-    $this->repository = $doctrine->getRepository(Product::class);
-    $this->cart = $cart;
-}
+    private $doctrine;
+    private $repository;
+    private $cart;
+    //Le inyectamos CartService como una dependencia
+    public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+    {
+        $this->doctrine = $doctrine;
+        $this->repository = $doctrine->getRepository(Product::class);
+        $this->cart = $cart;
+    }
 
-... 
-#[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-public function cart_add(int $id): Response
-{
-    $product = $this->repository->find($id);
-    if (!$product)
-        return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
+    ... 
+    #[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function cart_add(int $id): Response
+    {
+        $product = $this->repository->find($id);
+        if (!$product)
+            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
 
-    $this->cart->add($id, 1);
-	
-    $data = [
-        "id"=> $product->getId(),
-        "name" => $product->getName(),
-        "price" => $product->getPrice(),
-        "photo" => $product->getPhoto(),
-        "quantity" => $this->cart->getCart()[$product->getId()]
-    ];
-    return new JsonResponse($data, Response::HTTP_OK);
+        $this->cart->add($id, 1);
+	    
+        $data = [
+            "id"=> $product->getId(),
+            "name" => $product->getName(),
+            "price" => $product->getPrice(),
+            "photo" => $product->getPhoto(),
+            "quantity" => $this->cart->getCart()[$product->getId()]
+        ];
+        return new JsonResponse($data, Response::HTTP_OK);
 
-}
+    }
+ ?>
 ```
 
 Ahora probamos que la ruta funciona añadiendo manualmente un producto al carro [http://127.0.0.1:8080/cart/add/2](http://127.0.0.1:8080/cart/add/2)
