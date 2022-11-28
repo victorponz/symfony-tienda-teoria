@@ -467,7 +467,7 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 
 ![image-20221118190927675](/symfony-tienda-teoria/assets/img/image-20221118190927675.png)
 
-> -reto
+>-reto
 >
 > Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método `update` en  `CartService`
 >
