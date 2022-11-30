@@ -509,17 +509,17 @@ id='item-{{item.id}}'
 >
 > ![image-20221119174136033](/symfony-tienda-teoria/assets/img/image-20221119174136033.png)
 >
-> Como queremos acceder a un método de un servicio para acceder al método `totalItems` de `cartService`, en vez de pasarlo como un parámetro en cada uno de los métodos `render` de las rutas, vamos a definir este servicio como global para `twig`. Localiza el archivo `config/twig.yaml` y que quede así:
+> Como queremos acceder a un método de un servicio para acceder al método `totalItems` de `cartService`, en vez de pasarlo como un parámetro en cada uno de los métodos `render` de las rutas, vamos a definir este servicio como global para `twig`. Localiza el archivo `config/packages/twig.yaml` y que quede así:
 >
 > ```yaml
 > twig:
-> default_path: '%kernel.project_dir%/templates'
-> globals:
->     # the value is the service's id
->     cart: '@App\Service\CartService'
+>    default_path: '%kernel.project_dir%/templates'
+>    globals:
+>        # the value is the service's id
+>        cart: '@App\Service\CartService'
 > when@test:
-> twig:
->     strict_variables: true
+>    twig:
+>        strict_variables: true
 > ```
 >
 > Le estamos diciendo que cree la variable `cart` como una instancia de `App\Service\CartService`
