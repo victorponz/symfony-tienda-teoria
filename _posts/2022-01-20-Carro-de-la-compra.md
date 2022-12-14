@@ -277,40 +277,56 @@ public function add(int $id, int $quantity = 1){
 
 ### 3.2.2 Ruta
 
-Ahora creamos la ruta  `/cart/add/{id}`:
+Ahora creamos el controlador para el carro y la creamos la ruta  `/cart/add/{id}`:
 
 ```php
-....
-private $cart;
+<?php
 
-//Le inyectamos CartService como una dependencia
-public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+namespace App\Controller;
+
+use App\Entity\Product;
+use App\Service\CartService;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route(path:'/cart')]
+class CartController extends AbstractController
 {
-    $this->doctrine = $doctrine;
-    $this->repository = $doctrine->getRepository(Product::class);
-    $this->cart = $cart;
-}
+    private $doctrine;
+    private $repository;
+    private $cart;
+    //Le inyectamos CartService como una dependencia
+    public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+    {
+        $this->doctrine = $doctrine;
+        $this->repository = $doctrine->getRepository(Product::class);
+        $this->cart = $cart;
+    }
 
-... 
-#[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-public function cart_add(int $id): Response
-{
-    $product = $this->repository->find($id);
-    if (!$product)
-        return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
+    ... 
+    #[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function cart_add(int $id): Response
+    {
+        $product = $this->repository->find($id);
+        if (!$product)
+            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
 
-    $this->cart->add($id, 1);
-	
-    $data = [
-        "id"=> $product->getId(),
-        "name" => $product->getName(),
-        "price" => $product->getPrice(),
-        "photo" => $product->getPhoto(),
-        "quantity" => $this->cart->getCart()[$product->getId()]
-    ];
-    return new JsonResponse($data, Response::HTTP_OK);
+        $this->cart->add($id, 1);
+	    
+        $data = [
+            "id"=> $product->getId(),
+            "name" => $product->getName(),
+            "price" => $product->getPrice(),
+            "photo" => $product->getPhoto(),
+            "quantity" => $this->cart->getCart()[$product->getId()]
+        ];
+        return new JsonResponse($data, Response::HTTP_OK);
 
-}
+    }
+ ?>
 ```
 
 Ahora probamos que la ruta funciona añadiendo manualmente un producto al carro [http://127.0.0.1:8080/cart/add/2](http://127.0.0.1:8080/cart/add/2)
@@ -451,7 +467,7 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 
 ![image-20221118190927675](/symfony-tienda-teoria/assets/img/image-20221118190927675.png)
 
-> -reto
+> -reto-
 >
 > Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método `update` en  `CartService`
 >
@@ -469,9 +485,15 @@ Vamos a crear la ruta `cart/delete/{id}` y el método `delete` en `CartService` 
 
 Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos por `jquery` el producto y actualizaremos el total del carro:
 
-> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa ` unset($cart[$id]);`
+> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa `unset($cart[$id]);`
 >
-> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, `id='item-{{item.id}}'`
+> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, 
+{% raw %}
+```twig
+id='item-{{item.id}}'
+```
+{% endraw %}
+{% raw %}
 >
 > Si quieres darle un efecto de jQuery al eliminar el contenedor usa
 >
@@ -480,24 +502,24 @@ Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos
 > ```
 >
 > Además debes actualizar el total del carro
-
+{% endraw %}
 ### 3.4.3 Total productos
 
 > -reto-Crea un método en `CartService` que devuelva el total de productos comprados. Al añadir, modificar y eliminar, debes actualizar el total de productos que debe aparecer en la barra de navegación.
 >
 > ![image-20221119174136033](/symfony-tienda-teoria/assets/img/image-20221119174136033.png)
 >
-> Como queremos acceder a un método de un servicio para acceder al método `totalItems` de `cartService`, en vez de pasarlo como un parámetro en cada uno de los métodos `render` de las rutas, vamos a definir este servicio como global para `twig`. Localiza el archivo `config/twig.yaml` y que quede así:
+> Como queremos acceder a un método de un servicio para acceder al método `totalItems` de `cartService`, en vez de pasarlo como un parámetro en cada uno de los métodos `render` de las rutas, vamos a definir este servicio como global para `twig`. Localiza el archivo `config/packages/twig.yaml` y que quede así:
 >
 > ```yaml
 > twig:
-> default_path: '%kernel.project_dir%/templates'
-> globals:
->     # the value is the service's id
->     cart: '@App\Service\CartService'
+>    default_path: '%kernel.project_dir%/templates'
+>    globals:
+>        # the value is the service's id
+>        cart: '@App\Service\CartService'
 > when@test:
-> twig:
->     strict_variables: true
+>    twig:
+>        strict_variables: true
 > ```
 >
 > Le estamos diciendo que cree la variable `cart` como una instancia de `App\Service\CartService`
