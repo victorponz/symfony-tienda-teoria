@@ -46,7 +46,7 @@
     color: var(--text-color);
   }
   a.nav-link{
-   color: var(--text-color);
+   color: #000000;
   }
   .toggle-icons{
     margin: 0;
