@@ -28,7 +28,7 @@ Ponemos en marcha el servidor `php -S 127.0.0.1:8080 -t public` y ya podemos vis
 
 ## 1.2 Plantilla
 
-Todas las páginas de la aplicación comparten la cabecera y el pie. Vamos a crear la plantilla `base.html.twig` con dichos elementos. El título de la página y la parte centrar será lo variable.
+Todas las páginas de la aplicación comparten la cabecera y el pie. Vamos a crear la plantilla `base.html.twig` con dichos elementos. El título de la página y la parte central será lo variable.
 
 El primer paso va a ser crear un controlador para las páginas
 
