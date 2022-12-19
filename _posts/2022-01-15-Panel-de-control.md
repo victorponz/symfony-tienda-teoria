@@ -270,7 +270,7 @@ INSERT INTO `product` (`id`, `name`, `photo`, `price`) VALUES
 (1, 'Producto 1', 'product-1.png', 12.45),
 (2, 'Producto 2', 'product-2.png', 100),
 (3, 'Producto 3', 'product-3.png', 20),
-(4, 'Producto 4', 'product-4.png', 50);
+(4, 'Producto 4', 'product-4.png', 50),
 (5, 'Producto 5', 'product-3.png', 34);
 ```
 
