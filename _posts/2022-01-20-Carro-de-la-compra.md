@@ -431,7 +431,7 @@ public function index(): Response
 
 
 
-Ahora modificamos la plantilla, que en el original no aparecía y que podéis descargar desde [aquí](/tienda-symfony/assets/cart.html)
+Ahora modificamos la plantilla, que en el original no aparecía y que podéis descargar desde [aquí](https://github.com/victorponz/symfony-tienda-teoria/blob/master/assets/cart.html)
 
 > -reto-Crea la lógica para que se muestre el contenido del carro y que se actualice el total del mismo
 >
