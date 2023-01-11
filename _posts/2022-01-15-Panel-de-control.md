@@ -315,7 +315,7 @@ Un servicio es una forma de compartir código entre varias partes de la aplicaci
 
    ```php
    #[Route('/product', name: 'product')]
-   public function index(ProductsService $productsService): Response
+   public function product(ProductsService $productsService): Response
    {
        $products = $productsService->getProducts();
        return $this->render('product/product.html.twig', compact('products'));
