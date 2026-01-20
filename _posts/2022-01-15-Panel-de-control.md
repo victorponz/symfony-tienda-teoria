@@ -278,7 +278,6 @@ Un servicio es una forma de compartir código entre varias partes de la aplicaci
        }
    }
    ```
-   Aquí estamos usando una característica llamada *inyección de dependencias* ya que Symfony se encarga automáticamente de pasarnos una referencia a la clase `ManagerRegistry`
    
 2. Y ahora lo *inyectamos* en todos aquellos métodos en que queramos usarlo. 
 
