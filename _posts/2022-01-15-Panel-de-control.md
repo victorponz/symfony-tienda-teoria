@@ -37,6 +37,7 @@ Que creará una nueva ruta `admin`  y un nuevo controlador `DashboardController`
 Si visitamos la ruta [http://127.0.0.1:8080/admin](http://127.0.0.1:8080/admin) verás la página de inicio
 
 ![image-20221027181654194](/symfony-tienda-teoria/assets/img/image-20221027181654194.png)
+>-alert- Si aparace un error avisando de que no encuentra el controlador, limpia la caché mediante el comando `php bin/console cache:clear`
 
 ## 2.2 Team
 
@@ -76,12 +77,23 @@ Y luego generar el controlador CRUD
 Y por último, modificar `DashboardController` para que cargue por defecto el panel de control de la entidad `Team`
 
 ```php
+// Otros use
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+
 #[Route('/admin', name: 'admin')]
 public function index(): Response
 {
 $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
 
 return $this->redirect($adminUrlGenerator->setController(TeamCrudController::class)->generateUrl());
+}
+
+    public function configureMenuItems(): iterable
+    {
+        yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+        // Añadimos al menú el enlace al crud de Team
+        yield MenuItem::linkToCrud('Team', 'fas fa-list', Team::class);        
+    }
 ```
 
 ![image-20221027184941326](/symfony-tienda-teoria/assets/img/image-20221027184941326.png)
@@ -122,7 +134,7 @@ class TeamCrudController extends AbstractCrudController
 }
 ```
 
-Lo estamos configurando para que los campos `name` y `designation` sean por defecto y el campo `photo` sea de tipo `ImageField` y además  configuramos el directorio de subida y cuál es la ruta de la carpeta.
+Lo estamos configurando para que los campos `name` y `designation` sean de tipo `Field` (campo de texto) y el campo `photo` sea de tipo `ImageField` y además  configuramos el directorio de subida y cuál es la ruta de la carpeta.
 
 Ahora ya podemos subir una foto:
 
@@ -141,7 +153,9 @@ INSERT INTO `team` (`id`, `name`, `photo`, `designation`) VALUES
 
 ![image-20221027192959150](/symfony-tienda-teoria/assets/img/image-20221027192959150.png)
 
-Ya sólo nos queda hacer el partial para mostrar a los miembros del equipo. Pasamos todo el código html a una plantilla llamada `partials/_team.html.twig` y en la vista `index.html.twig` la incluimos.
+Ya sólo nos queda hacer el partial para mostrar a los miembros del equipo en la ruta `index`. 
+
+Pasamos todo el código html a una plantilla llamada `partials/_team.html.twig` y en la vista `index.html.twig` la incluimos.
 
 Ya solo queda conectarla con la base de datos. 
 
@@ -157,107 +171,60 @@ public function index(ManagerRegistry $doctrine): Response
 }
 ```
 
+Creamos el partial para el miembro del equipo:
+
+{% raw %}
+
+```twig
+<div class="team-item">
+    <div class="position-relative overflow-hidden">
+        <img class="img-fluid w-100" src="{{ asset('img/' ~ teamMember.photo) }}" alt="">
+        <div class="team-overlay">
+            <div class="d-flex align-items-center justify-content-start">
+                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-twitter"></i></a>
+                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-facebook"></i></a>
+                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-light text-center p-4">
+        <h5 class="text-uppercase">{{ teamMember.name }}</h5>
+        <p class="m-0">{{ teamMember.designation }}</p>
+    </div>
+</div>
+```
+
+{% endraw %}
+
 Y ahora modificamos `_team.html.twig` para recorrer los miembros del equipo:
 
 {% raw %}
 
-```php
+```twig
     <!-- Team Start -->
-    <div class="container-fluid py-5">
-        <div class="container">
-            <div class="border-start border-5 border-primary ps-5 mb-5" style="max-width: 600px;">
-                <h6 class="text-primary text-uppercase">Team Members</h6>
-                <h1 class="display-5 text-uppercase mb-0">Qualified Pets Care Professionals</h1>
-            </div>
-            <div class="owl-carousel team-carousel position-relative" style="padding-right: 25px;">
-             {% for teamMember in team %}
-                <div class="team-item">
-                    <div class="position-relative overflow-hidden">
-                        <img class="img-fluid w-100" src="{{ asset('img/' ~ teamMember.photo) }}" alt="">
-                        <div class="team-overlay">
-                            <div class="d-flex align-items-center justify-content-start">
-                                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-twitter"></i></a>
-                                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-facebook"></i></a>
-                                <a class="btn btn-light btn-square mx-1" href="#"><i class="bi bi-linkedin"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-light text-center p-4">
-                        <h5 class="text-uppercase">{{ teamMember.name }}</h5>
-                        <p class="m-0">{{ teamMember.designation }}</p>
-                    </div>
-                </div>
-            {% endfor %}
-            </div>
+<div class="container-fluid py-5">
+    <div class="container">
+        <div class="border-start border-5 border-primary ps-5 mb-5" style="max-width: 600px;">
+            <h6 class="text-primary text-uppercase">Team Members</h6>
+            <h1 class="display-5 text-uppercase mb-0">Qualified Pets Care Professionals</h1>
+        </div>
+        <div class="owl-carousel team-carousel position-relative" style="padding-right: 25px;">
+         {% for teamMember in team %}
+            {{include('partials/_teamMember.html.twig', {'teamMember': teamMember})}}
+         {% endfor %}
         </div>
     </div>
-    <!-- Team End -->
+</div>
+<!-- Team End -->
 ```
 
 {% endraw %}
 
-Resulta que las fotos del equipo también aparecen en la ruta `about` por lo que hay que proceder de la misma forma: 1.- modificar el controlador, 2.- modificar la plantilla `about.html.twig`
+> -reto-**Reto**
+>
+> Haz lo mismo en la página `about`
 
-```php
-#[Route('/about', name: 'about')]
-public function about(ManagerRegistry $doctrine): Response
-{
-    $repository = $doctrine->getRepository(Team::class);
-    $team = $repository->findAll();
-    return $this->render('page/about.html.twig', compact('team'));
-}
-```
-
-> -alert-Pero como veis es el mismo código que en el controlador `index` y hemos de intentar siempre no repetirnos (**DRY** Don't Repeat Yourself). Así que vamos a usar [Controladores Embebidos](https://symfony.com/doc/current/templates.html#embedding-controllers). Creamos un método que obtenga los miembros del equipo y que además renderiza la plantilla:
-
-```php
-public function teamTemplate(ManagerRegistry $doctrine): Response
-{
-    $repository = $doctrine->getRepository(Team::class);
-    $team = $repository->findAll();
-    return $this->render('partials/_team.html.twig',compact('team'));
-}
-```
-
-Modificamos las plantillas `index.html.twig` y `about.html.twig`, cambiando
-
-{% raw %}
-
-```twig
-{{ include ('partials/_team.html.twig')}}
-```
-
-{% endraw %}
-
-por
-
-{% raw %}
-
-```twig
-{{ render(controller('App\\Controller\\PageController::teamTemplate')) }}
-```
-
-{% endraw %}
-
-Y ya podemos eliminar el código duplicado
-
-```php
-#[Route('/', name: 'index')]
-public function index(ManagerRegistry $doctrine): Response
-{
-    return $this->render('page/index.html.twig');
-}
-
-#[Route('/about', name: 'about')]
-public function about(ManagerRegistry $doctrine): Response
-{
-    return $this->render('page/about.html.twig');
-}
-```
-
-Procedemos de la misma manera para el controlador `team`
-
-## 2.3 Productos
+## 2.3 Product
 
 > -reto-**Reto**
 >
@@ -278,15 +245,17 @@ Y ahora crea el partial para los productos que incluirás en la ruta `product` e
 
 ![image-20221101195632637](/symfony-tienda-teoria/assets/img/image-20221101195632637.png)
 
-En este caso vemos que también hemos de cargar los productos en dos rutas. Pero esta vez vamos a crear un [servicio](https://symfony.com/doc/current/service_container.html):
+En este caso vemos hemos de cargar los productos en dos rutas (`index` y `product`). Y un pricipio básico de la programación es **DRY** (Don't Repeat Yourself)
+
+Para no repetir código, vamos a crear un [servicio](https://symfony.com/doc/current/service_container.html):
 
 > Your application is *full* of useful objects: a "Mailer" object might help you send emails while another object might help you save things to the database. Almost *everything* that your app "does" is actually done by one of these objects. And each time you install a new bundle, you get access to even more!
 >
 > In Symfony, these useful objects are called **services** and each service lives inside a very special object called the **service container**. The container allows you to centralize the way objects are constructed. It makes your life easier, promotes a strong architecture and is super fast!
 
-Un servicio es una forma de compartir código entre varias partes de la aplicación. Para usarlo sólo hay que hacer type-hinting. Vamos a verlo:
+Un servicio es una forma de compartir código entre varias partes de la aplicación. Para usarlo sólo hay que hacer `type-hinting` y dejar que Symfony nos lo inyecte (Dependency Injection Principle). Vamos a verlo:
 
-1. Creamos el servicio en `App\Services\ProductsService`
+1. Creamos el servicio en `App\Service\ProductsService`
 
    ```php
    <?php
