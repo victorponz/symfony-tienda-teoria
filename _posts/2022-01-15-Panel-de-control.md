@@ -61,12 +61,18 @@ El primer paso es crear la entidad `Team`.
 
 <script id="asciicast-0OjF1EFPSSHI6dqUiGz6QFtmA" src="https://asciinema.org/a/0OjF1EFPSSHI6dqUiGz6QFtmA.js" async></script>
 
-Generar la migración:
+Y generar la migración:
 
 ```
 php bin/console make:migration
 php bin/console doctrine:migrations:migrate
 ```
+
+Y luego generar el controlador CRUD
+
+> -info-**CRUD** son las iniciales de **C**reate, **R**ead, **U**pdate y **D**elete que son las operaciones básicas que se realizan con una entidad
+
+<script id="asciicast-JmpDyeqVjzCQaNV6QFvdNaACv" src="https://asciinema.org/a/JmpDyeqVjzCQaNV6QFvdNaACv.js" async></script>
 
 Y por último, modificar `DashboardController` para que cargue por defecto el panel de control de la entidad `Team`
 
@@ -96,7 +102,7 @@ Ahora ya podemos añadir miembros al equipo.
 
 ![image-20221027185039315](/symfony-tienda-teoria/assets/img/image-20221027185039315.png)
 
-Pero claro, EasyAdmin no sabe que el campo `Photo` debe ser de tipo `Image`
+Pero claro, EasyAdmin no sabe que el campo `Photo` debe ser de tipo `File`
 
 Así que configuramos `TeamCrudController` para modificar los campos:
 
