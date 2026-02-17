@@ -144,7 +144,7 @@ Ahora vamos a dibujar la ventana creando un partial llamado `_infoProducto.html.
 </div>
 ```
 
-En esta plantilla lo que realmente importa son los elementos con los id's: `productName`, `productImage` y `productPrice` ya que son los elementos que reemplazaremos con los devueltos por la api.
+En esta plantilla lo que realmente importa son los elementos con los id's: `productName`, `productImage` y `productPrice` dentro del <div class="modal-body"> ya que son los elementos que reemplazaremos con los datos devueltos por la api.
 
 Esta plantilla la incluimos dentro de `base.html.twig` para que esté disponible en todas las rutas.
 
@@ -153,18 +153,31 @@ Ya por último un poco de `jquery` en `/public/js/app.js`
 ```javascript
 //Immediately-Invoked Function Expression (IIFE)
 (function(){
+    // Este es el id de la ventana modal
     const infoProduct = $("#infoProduct");
+    
+    // Evento click en todos los enlaces del producto con clase `open-info-product`
     $( "a.open-info-product" ).click(function(event) {
+      
+      // Nos prevenimos de que el enlace funcione y recargue la página
       event.preventDefault();
+      
+      // Hemos añadido el atributo `data-id` para poder saber que producto pedir 
       const id = $( this ).attr('data-id');
+      // Esta es la ruta a la api
       const href = `/api/show/${id}`;
       $.get( href, function(data) {
+        // Cuando devuelve los datos, `data` tiene los datos en json y ya puedo 
+        // sustituir la plantilla con los datos correctos
         $( infoProduct ).find( "#productName" ).text(data.name);
         $( infoProduct ).find( "#productPrice" ).text(data.price);
         $( infoProduct ).find( "#productImage" ).attr("src", "/img/" + data.photo);
+        
+        // Mostrar la ventana
         infoProduct.modal('show');
       })
     });
+    // La ventana tiene un botón con la clase `closeInfoProduct` que haremos que esconda la modal
     $(".closeInfoProduct").click(function (e) {
       infoProduct.modal('hide');
     });
@@ -177,6 +190,10 @@ Ya por último un poco de `jquery` en `/public/js/app.js`
 * `closeInfoProduct` es la clase que tiene la ventana modal en el aspa y el botón para cerrar.
 
 Y ya sólo resta incluir este javascript en la plantilla base:
+
+>  -alert
+>
+> Los siguientes javascripts han de colocarse después del código html de la ventana modal
 
 {% raw %}
 
@@ -535,5 +552,4 @@ Crea las rutas `register`, `login` y `logout`. Protege la ruta `/admin` para que
 
 
 Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
-
 
