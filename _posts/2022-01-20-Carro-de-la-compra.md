@@ -38,10 +38,9 @@ Como siempre vamos a crear una nueva ruta en un nuevo controlador llamado `ApiCo
 
 ```php
 <?php
-namespace App\Controller;
 
-use App\Entity\Product;
-use Doctrine\Persistence\ManagerRegistry;
+namespace App\Controller;
+use App\Service\ProductsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -51,27 +50,33 @@ use Symfony\Component\Routing\Annotation\Route;
 class ApiController extends AbstractController
 {
     #[Route('/show/{id}', name: 'api-show',  methods: ['GET'])]
-    public function show(ManagerRegistry $doctrine, $id): JsonResponse
+    public function get(ProductsService $productsService, int $id): JsonResponse
     {
-        $repository = $doctrine->getRepository(Product::class);
-        $product = $repository->find($id);
+        $product = $productsService->getProduct($id);
         if (!$product)
-            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
-        
-        $data = [
-            "id"=> $product->getId(),
-            "name" => $product->getName(),
-            "price" => $product->getPrice(),
-            "photo" => $product->getPhoto()
-         ];
+            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);        
+        $data = $productsService->toArray($product);
         return new JsonResponse($data, Response::HTTP_OK);
     }
 }
 ```
 
-Fíjate que en la línea <span style='color:red'>11</span> aparece `#[Route(path:'/api')]`. Esto hace que todos las rutas que creemos en este controlador estén prefijadas con `/api`. Es decir, el controlador `api-show` responde a la ruta `/api/show/{id}`
+Fíjate que en la línea <span style='color:red'>10</span> aparece `#[Route(path:'/api')]`. Esto hace que todos las rutas que creemos en este controlador estén prefijadas con `/api`. Es decir, el controlador `api-show` responde a la ruta `/api/show/{id}`. Además, fijamos que esta ruta sólo debe responder a peticiones `GET` mediante `methods: ['GET']`.
 
-Además, fijamos que esta ruta sólo debe responder a peticiones `GET` mediante `methods: ['GET']`.
+Y creamos un servicio:
+
+```php
+private $repository;
+private $cart;
+
+public function __construct(ProductRepository $repository)
+{
+    $this->repository = $repository;
+}
+public function getProduct(int $id): ?Product{
+    return $this->repository->find($id);
+}
+```
 
 Como estamos en una [API REST](https://nachoiborraies.github.io/laravel/md/es/06a) (**Re**presentational **S**tate **T**ransfer), hemos de devolver los datos en formato JSON. Si no encontramos el producto devolvemos un array vacío con el `status code` 400; en otro caso, creamos un objeto JSON y lo devolvemos. También fíjate que ahora devolvemos un objeto de la clase `JsonResponse`
 
@@ -472,7 +477,7 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 >      ];
 >      // Actualizar el total
 >      $totalCart += $item["quantity"] * $item["price"];
->      //Añadir el item al array
+>      //Añadir 
 >      $items[] = $item;
 >  }
 > 
@@ -548,3 +553,10 @@ id='item-{{item.id}}'
 ## 3.5 Gestión de usuarios
 
 Crea las rutas `register`, `login` y `logout`. Protege la ruta `/admin` para que sólo puedan acceder los usuarios con rol `ADMIN` y modifica la barra de navegación.
+
+
+
+
+
+Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
+

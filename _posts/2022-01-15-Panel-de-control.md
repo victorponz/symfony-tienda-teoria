@@ -157,17 +157,49 @@ Ya sólo nos queda hacer el partial para mostrar a los miembros del equipo en la
 
 Pasamos todo el código html a una plantilla llamada `partials/_team.html.twig` y en la vista `index.html.twig` la incluimos.
 
-Ya solo queda conectarla con la base de datos. 
+### Servicios
 
-Primero modificamos el controlador de la ruta `index`
+En este  proyecto vamos a usar una capa más de abstracción, creando servicios. En los servicios es donde se crean todas los accesos a la base de datos y Symfony los inyectará automáticamente (`autowiring`) donde haga falta
 
 ```php
-#[Route('/', name: 'index')]
-public function index(ManagerRegistry $doctrine): Response
+<?php
+namespace App\Service;
+
+use App\Repository\TeamRepository;
+
+class TeamService{
+    private $repository;
+
+    public function __construct(TeamRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+    public function getTeam(): array{
+        return $this->repository->findAll();
+    }
+}
+```
+
+Y ahora lo usamos en el código.
+
+```php
+use App\service\TeamService;
+
+....
+private $productsService;
+private $teamService;
+public function __construct(ProductsService $productsService, TeamService $teamService)
 {
-    $repository = $doctrine->getRepository(Team::class);
-    $team = $repository->findAll();
-    return $this->render('page/index.html.twig', compact('team'));
+    $this->productsService = $productsService;
+    $this->teamService = $teamService;
+}
+       
+#[Route('/', name: 'index')]
+//Symfony inyecta automáticamente el servicio
+public function index(TeamService $teamService): Response
+{
+    $team = $this->TeamService->getTeam();
+	return $this->render('page/index.html.twig', compact('team'));
 }
 ```
 
@@ -245,52 +277,7 @@ Y ahora crea el partial para los productos que incluirás en la ruta `product` e
 
 ![image-20221101195632637](/symfony-tienda-teoria/assets/img/image-20221101195632637.png)
 
-En este caso vemos hemos de cargar los productos en dos rutas (`index` y `product`). Y un pricipio básico de la programación es **DRY** (Don't Repeat Yourself)
-
-Para no repetir código, vamos a crear un [servicio](https://symfony.com/doc/current/service_container.html):
-
-> Your application is *full* of useful objects: a "Mailer" object might help you send emails while another object might help you save things to the database. Almost *everything* that your app "does" is actually done by one of these objects. And each time you install a new bundle, you get access to even more!
->
-> In Symfony, these useful objects are called **services** and each service lives inside a very special object called the **service container**. The container allows you to centralize the way objects are constructed. It makes your life easier, promotes a strong architecture and is super fast!
-
-Un servicio es una forma de compartir código entre varias partes de la aplicación. Para usarlo sólo hay que hacer `type-hinting` y dejar que Symfony nos lo inyecte (Dependency Injection Principle). Vamos a verlo:
-
-1. Creamos el servicio en `App\Service\ProductsService`
-
-   ```php
-   <?php
-   namespace App\Service;
-   
-   use App\Entity\Product;
-   use Doctrine\Persistence\ManagerRegistry;
-   
-   class ProductsService{
-       private $doctrine;
-   
-       public function __construct(ManagerRegistry $doctrine)
-       {
-           //Como hace falta acceder a ManagerRegistry lo inyectamos en el constructor
-           $this->doctrine = $doctrine;
-       }
-       public function getProducts(): ?array{
-           $repository = $this->doctrine->getRepository(Product::class);
-           return $repository->findAll();
-       }
-   }
-   ```
-   
-2. Y ahora lo *inyectamos* en todos aquellos métodos en que queramos usarlo. 
-
-   ```php
-   #[Route('/product', name: 'product')]
-   public function product(ProductsService $productsService): Response
-   {
-       $products = $productsService->getProducts();
-       return $this->render('product/product.html.twig', compact('products'));
-   }
-   ```
-
 > -reto-**Reto**
 >
-> Haz lo mismo para la ruta `/`
+> Siguiendo el modelo de `Team` incluye un listado de productos donde sea necesario
 
