@@ -44,7 +44,7 @@ Si visitamos la ruta [http://127.0.0.1:8080/admin](http://127.0.0.1:8080/admin) 
 Primero configuramos la conexión en el archivo `.env`
 
 ```
-DATABASE_URL=mysql://root:sa@127.0.0.1:3306/tienda
+DATABASE_URL="mysql://root:sa@127.0.0.1:3306/tienda?serverVersion=5.7&charset=utf8mb4"
 ```
 
 Y creamos la base de datos:
@@ -200,7 +200,7 @@ Y ahora modificamos `_team.html.twig` para recorrer los miembros del equipo:
 
 {% raw %}
 
-```twig
+```html
     <!-- Team Start -->
 <div class="container-fluid py-5">
     <div class="container">

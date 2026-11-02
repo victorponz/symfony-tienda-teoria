@@ -38,8 +38,8 @@ Como siempre vamos a crear una nueva ruta en un nuevo controlador llamado `ApiCo
 
 ```php
 <?php
-
 namespace App\Controller;
+
 use App\Entity\Product;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -103,7 +103,7 @@ Como enlace usaremos el propio botón de ver producto al que le inyectaremos com
 
 {% raw %}
 
-```twig
+```html
 <a class="btn btn-primary py-2 px-3 open-info-product" data-id="{{product.id}}"><i class="bi bi-eye"></i></a>
 ```
 
@@ -144,7 +144,7 @@ Ahora vamos a dibujar la ventana creando un partial llamado `_infoProducto.html.
 </div>
 ```
 
-En esta plantilla lo que realmente importa son los elementos con los id's: `productName`, `productImage` y `productPrice` dentro del <div class="modal-body"> ya que son los elementos que reemplazaremos con los datos devueltos por la api.
+En esta plantilla lo que realmente importa son los elementos con los id's: `productName`, `productImage` y `productPrice` dentro del `<div class="modal-body">` ya que son los elementos que reemplazaremos con los datos devueltos por la api.
 
 Esta plantilla la incluimos dentro de `base.html.twig` para que esté disponible en todas las rutas.
 
@@ -458,23 +458,25 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 > #[Route('/', name: 'app_cart')]
 > public function index(): Response
 > {
->     $products = $this->repository->getFromCart($this->cart);
->     //hay que añadir la cantidad de cada producto
->     $items = [];
->     $totalCart = 0;
->     foreach($products as $product){
->         $item = [
->             "id"=> $product->getId(),
->             "name" => $product->getName(),
->             "price" => $product->getPrice(),
->             "photo" => $product->getPhoto(),
->             "quantity" => $this->cart->getCart()[$product->getId()]
->         ];
->         $totalCart += $item["quantity"] * $item["price"];
->         $items[] = $item;
->     }
+>  $products = $this->repository->getFromCart($this->cart);
+>  //hay que añadir la cantidad de cada producto
+>  $items = [];
+>  $totalCart = 0;
+>  foreach($products as $product){
+>      $item = [
+>          "id"=> $product->getId(),
+>          "name" => $product->getName(),
+>          "price" => $product->getPrice(),
+>          "photo" => $product->getPhoto(),
+>          "quantity" => $this->cart->getCart()[$product->getId()]
+>      ];
+>      // Actualizar el total
+>      $totalCart += $item["quantity"] * $item["price"];
+>      //Añadir el item al array
+>      $items[] = $item;
+>  }
 > 
->     return $this->render('cart/index.html.twig', ['items' => $items, 'totalCart' => $totalCart]);
+>  return $this->render('cart/index.html.twig', ['items' => $items, 'totalCart' => $totalCart]);
 > }
 > ```
 
@@ -546,10 +548,3 @@ id='item-{{item.id}}'
 ## 3.5 Gestión de usuarios
 
 Crea las rutas `register`, `login` y `logout`. Protege la ruta `/admin` para que sólo puedan acceder los usuarios con rol `ADMIN` y modifica la barra de navegación.
-
-
-
-
-
-Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
-
