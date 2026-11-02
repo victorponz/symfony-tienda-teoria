@@ -83,17 +83,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 #[Route('/admin', name: 'admin')]
 public function index(): Response
 {
-$adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
+	$adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
 
-return $this->redirect($adminUrlGenerator->setController(TeamCrudController::class)->generateUrl());
+	return $this->redirect($adminUrlGenerator->setController(TeamCrudController::class)->generateUrl());
 }
 
-    public function configureMenuItems(): iterable
-    {
-        yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
-        // Añadimos al menú el enlace al crud de Team
-        yield MenuItem::linkToCrud('Team', 'fas fa-list', Team::class);        
-    }
+public function configureMenuItems(): iterable
+{
+    yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+    // Añadimos al menú el enlace al crud de Team
+    yield MenuItem::linkToCrud('Team', 'fas fa-list', Team::class);        
+}
 ```
 
 ![image-20221027184941326](/symfony-tienda-teoria/assets/img/image-20221027184941326.png)
@@ -175,7 +175,7 @@ Creamos el partial para el miembro del equipo:
 
 {% raw %}
 
-```twig
+```html
 <div class="team-item">
     <div class="position-relative overflow-hidden">
         <img class="img-fluid w-100" src="{{ asset('img/' ~ teamMember.photo) }}" alt="">
