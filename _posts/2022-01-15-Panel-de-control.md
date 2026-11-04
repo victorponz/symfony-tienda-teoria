@@ -159,7 +159,14 @@ Pasamos todo el código html a una plantilla llamada `partials/_team.html.twig` 
 
 ### Servicios
 
-En este  proyecto vamos a usar una capa más de abstracción, creando servicios. En los servicios es donde se crean todas los accesos a la base de datos y Symfony los inyectará automáticamente (`autowiring`) donde haga falta
+En este  proyecto vamos a usar una capa más de abstracción, creando servicios. En los servicios es donde se crean todas los accesos a la base de datos y Symfony los inyectará automáticamente (`autowiring`) donde haga falta:
+
+> Imagina un controlador que recibe un pedido. Ese controlador valida los datos, calcula el total con IVA, aplica descuentos, guarda en la base de datos y envía un email de confirmación. Al final tiene 200 líneas. Además, si mañana necesitas calcular el total desde otro sitio (un comando, una API...), tienes que copiar ese código.
+>
+> La solución es separar responsabilidades:
+>
+> - El **controlador** solo recibe la petición, llama a quien sabe hacer el trabajo y devuelve la respuesta.
+> - El **servicio** es una clase que sabe hacer una tarea concreta. Por ejemplo, `PedidoService` sabe calcular totales y `MailerService` sabe enviar correos.
 
 ```php
 <?php
@@ -190,13 +197,13 @@ private $productsService;
 private $teamService;
 public function __construct(ProductsService $productsService, TeamService $teamService)
 {
+    // Automáticamente, Symfony sirve estos dos servicios
     $this->productsService = $productsService;
     $this->teamService = $teamService;
 }
        
 #[Route('/', name: 'index')]
-//Symfony inyecta automáticamente el servicio
-public function index(TeamService $teamService): Response
+public function index(): Response
 {
     $team = $this->TeamService->getTeam();
 	return $this->render('page/index.html.twig', compact('team'));
