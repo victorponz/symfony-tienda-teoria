@@ -38,36 +38,42 @@ Como siempre vamos a crear una nueva ruta en un nuevo controlador llamado `ApiCo
 
 ```php
 <?php
-
 namespace App\Controller;
+
 use App\Service\ProductsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route(path:'/api')]
+#[Route(path:'/api/productos')]
 class ApiController extends AbstractController
 {
-    #[Route('/show/{id}', name: 'api-show',  methods: ['GET'])]
-    public function get(ProductsService $productsService, int $id): JsonResponse
+    private ProductsService $productsService;
+    public function __construct(ProductsService $productsService)
     {
-        $product = $productsService->getProduct($id);
+        $this->productsService = $productsService;
+    }
+
+    #[Route('/{id}', name: 'api-get-producto',  methods: ['GET'])]
+    public function get(int $id): JsonResponse
+    {
+        $product = $this->productsService->getProduct($id);
         if (!$product)
-            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);        
-        $data = $productsService->toArray($product);
-        return new JsonResponse($data, Response::HTTP_OK);
+            return new JsonResponse("[]", JsonResponse::HTTP_NOT_FOUND);
+        
+        $data = $this->productsService->toArray($product);
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
     }
 }
+
 ```
 
-Fíjate que en la línea <span style='color:red'>10</span> aparece `#[Route(path:'/api')]`. Esto hace que todos las rutas que creemos en este controlador estén prefijadas con `/api`. Es decir, el controlador `api-show` responde a la ruta `/api/show/{id}`. Además, fijamos que esta ruta sólo debe responder a peticiones `GET` mediante `methods: ['GET']`.
+Fíjate que en la línea <span style='color:red'>9</span> aparece `#[Route(path:'/api/productos')]`. Esto hace que todos las rutas que creemos en este controlador estén prefijadas con `/api/productos`. Es decir, el controlador `api-get-producto` responde a la ruta `/api/productos/{id}`. Además, fijamos que esta ruta sólo debe responder a peticiones `GET` mediante `methods: ['GET']`.
 
-Y creamos un servicio:
+Y creamos un servicio en `ProductsService`:
 
 ```php
 private $repository;
-private $cart;
 
 public function __construct(ProductRepository $repository)
 {
@@ -82,7 +88,7 @@ Como estamos en una [API REST](https://nachoiborraies.github.io/laravel/md/es/06
 
 Más adelante trabajaremos más a fondo las API Rest.
 
-Por ejemplo, esta es la respuesta a una petición [http://127.0.0.1:8080/api/show/1](http://127.0.0.1:8080/api/show/1):
+Por ejemplo, esta es la respuesta a una petición [http://127.0.0.1:8080/api/productos/1](http://127.0.0.1:8080/api/show/1):
 
 ```json
 {"id":1,"name":"Producto 1","price":12.45,"photo":"product-1.png"}
@@ -162,26 +168,35 @@ Ya por último un poco de `jquery` en `/public/js/app.js`
     const infoProduct = $("#infoProduct");
     
     // Evento click en todos los enlaces del producto con clase `open-info-product`
-    $( "a.open-info-product" ).click(function(event) {
-      
-      // Nos prevenimos de que el enlace funcione y recargue la página
-      event.preventDefault();
-      
-      // Hemos añadido el atributo `data-id` para poder saber que producto pedir 
-      const id = $( this ).attr('data-id');
-      // Esta es la ruta a la api
-      const href = `/api/show/${id}`;
-      $.get( href, function(data) {
-        // Cuando devuelve los datos, `data` tiene los datos en json y ya puedo 
-        // sustituir la plantilla con los datos correctos
-        $( infoProduct ).find( "#productName" ).text(data.name);
-        $( infoProduct ).find( "#productPrice" ).text(data.price);
-        $( infoProduct ).find( "#productImage" ).attr("src", "/img/" + data.photo);
-        
-        // Mostrar la ventana
-        infoProduct.modal('show');
-      })
-    });
+    $( "a.open-info-product" ).click(function(event) {      
+        // Nos prevenimos de que el enlace no recargue la página
+        event.preventDefault();
+
+        // Hemos añadido el atributo `data-id` para poder saber que producto pedir 
+        const id = $( this ).attr('data-id');
+        // Esta es la ruta a la api
+        const href = `/api/productos/${id}`;
+        fetch(href)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Cuando devuelve los datos, `data` tiene los datos en json y ya puedo
+            // sustituir la plantilla con los datos correctos
+            $(infoProduct).find("#productName").text(data.name);
+            $(infoProduct).find("#productPrice").text(data.price);
+            $(infoProduct).find("#productImage").attr("src", "/img/" + data.photo);
+
+            // Mostrar la ventana
+            infoProduct.modal('show');
+          })
+          .catch(error => {
+            console.error('Error al cargar el producto:', error);
+          });
+        });
     // La ventana tiene un botón con la clase `closeInfoProduct` que haremos que esconda la modal
     $(".closeInfoProduct").click(function (e) {
       infoProduct.modal('hide');
@@ -226,7 +241,7 @@ Vamos a crear una ventana modal para el carro de la compra. Al igual que antes n
 
 ### 3.2.1 Gestión de la sesión
 
-Para gestionar la sesión usaremos la clase `Symfony\Component\HttpFoundation\RequestStack` que se la inyectaremos al constructor:
+Para gestionar la sesión usaremos la clase `Symfony\Component\HttpFoundation\RequestStack` que se la inyectaremos al constructor del servicio `CartService` 
 
 ```php
 public function __construct(RequestStack $requestStack)
@@ -246,7 +261,7 @@ Para guardar los productos del carro vamos a crear un array asociativo que guard
 ```php
 [	
 	3 => 1 //Cantidad 1 del producto 3
-	4 => 1 //Cantidad 1 del producto 4
+	4 => 2 //Cantidad 2 del producto 4
 ]
 ```
 
@@ -272,7 +287,6 @@ class CartService{
         return $this->getSession()->get(self::KEY, []);
     }
     public function add(int $id, int $quantity = 1){
-        //https://symfony.com/doc/current/session.html
         $cart = $this->getCart();
         //Sólo añadimos si no lo está 
         if (!array_key_exists($id, $cart))
@@ -288,7 +302,6 @@ Aparte del esqueleto, la parte interesante es donde almacena el array en la clav
 
 ```php
 public function add(int $id, int $quantity = 1){
-    //https://symfony.com/doc/current/session.html
     $cart = $this->getCart();
     //Sólo añadimos si no lo está 
     if (!array_key_exists($id, $cart))
@@ -299,7 +312,7 @@ public function add(int $id, int $quantity = 1){
 
 ### 3.2.2 Ruta
 
-Ahora creamos el controlador para el carro y la creamos la ruta  `/cart/add/{id}`:
+Ahora creamos el controlador para el carro y la creamos la ruta  `/cart/add`:
 
 ```php
 <?php
@@ -308,7 +321,7 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Service\CartService;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Repository\ProductRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -317,38 +330,48 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route(path:'/cart')]
 class CartController extends AbstractController
 {
-    private $doctrine;
     private $repository;
     private $cart;
-    //Le inyectamos CartService como una dependencia
-    public  function __construct(ManagerRegistry $doctrine, CartService $cart)
+    
+    //Symfony inyecta CartService como una dependencia
+    public  function __construct(ProductRepository $repository, CartService $cart)
     {
-        $this->doctrine = $doctrine;
-        $this->repository = $doctrine->getRepository(Product::class);
+        $this->repository = $repository;
         $this->cart = $cart;
     }
 
     ... 
-    #[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function cart_add(int $id): Response
+    #[Route('/add', name: 'cart_add', methods: ['POST'])]
+    public function cart_add(Request $request): JsonResponse
     {
-        $product = $this->repository->find($id);
+        //Cogemos el id del producto a añadir del cuerpo de la petición
+        $id = $request->request->getInt('id') ?? -1; // El valor -1 no está en ningún producto, así que devolverá 404 si no se pasa un id válido
+        $product = $this->productsService->getProduct($id);
         if (!$product)
-            return new JsonResponse("[]", Response::HTTP_NOT_FOUND);
+            return new JsonResponse("[]", JsonResponse::HTTP_NOT_FOUND);
 
         $this->cart->add($id, 1);
-	    
-        $data = [
-            "id"=> $product->getId(),
-            "name" => $product->getName(),
-            "price" => $product->getPrice(),
-            "photo" => $product->getPhoto(),
-            "quantity" => $this->cart->getCart()[$product->getId()]
-        ];
-        return new JsonResponse($data, Response::HTTP_OK);
-
+		//Convertimos a JSON
+        $data = $this->productsService->toCartItem($product);
+        $data["totalItems"] = $this->cart->totalItems();
+        
+        return $this->json($data, JsonResponse::HTTP_CREATED, [
+                'Location' => $this->generateUrl('cart_get', ['id' => $id])
+        ]);
     }
+
  ?>
+```
+
+Creamos el método `toCartItem` en `ProductService`
+
+```php
+public function toCartItem(Product $product): array{
+    $item = $this->toArray($product);
+    // Por defecto es 0
+    $item["quantity"] = $this->cart->getCart()[$product->getId()] ?? 0;
+    return $item;
+}   
 ```
 
 Ahora probamos que la ruta funciona añadiendo manualmente un producto al carro [http://127.0.0.1:8080/cart/add/2](http://127.0.0.1:8080/cart/add/2)
@@ -493,31 +516,38 @@ Ahora modificamos la plantilla, que en el original no aparecía y que podéis de
 
 > -reto-
 >
-> Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/update/{id}/{quantity}` y crear el método `update` en  `CartService`
+> Nos queda por hacer funcionar los botones `update` y `View Cart`. Para el botón `Update` debes crear la ruta `/cart/products/update` y crear el método `update` en  `CartService`
 >
 > ```php
-> public function update(int $id, int $quantity = 1){
-> 	
+> #[Route('/update', name: 'cart_update', methods: ['PATCH'])]
+> public function cart_update(Request $request): JsonResponse
+> 
+> 
 > }
 > ```
+>
+> Deberás también crear un método en la ventana del carro (`app.js`) que se vincule con el botón `update`, con el método `PATCH` y los parámetros `if` y `cantidad`
+>
+> El verbo de la request `PATCH` se usa para modificar elementos 
 
 ### 3.4.2 Eliminar un producto del carro
 
-Vamos a crear la ruta `cart/delete/{id}` y el método `delete` en `CartService` y el botón **Remove from Cart**
+Vamos a crear la ruta `cart/delete` y el método `delete` en `CartService` y el botón **Remove from Cart**
 
-![image-20221119170021148](/symfony-tienda-teoria/assets/img/image-20221119170021148.png)
+![image-20261113093636722](/symfony-tienda-teoria/assets/img/image-20261113093636722.png)
 
-Haremos una petición `POST` por ajax, y cuando devuelva la petición borraremos por `jquery` el producto y actualizaremos el total del carro:
+Haremos una petición `DELETE` por ajax, y cuando devuelva la petición borraremos por `jquery` el producto y actualizaremos el total del carro:
 
-> -reto- Crea la ruta `cart/delete/{id}` y el método `delete` en `CartService`. Para eliminar un elemento del array usa `unset($cart[$id]);`
+> -reto- Crea la ruta `cart/delete` y el método `delete` en `CartService`. Para eliminar un elemento del array usa `unset($cart[$id]);`
 >
-> Después con jQuery selecciona todos los botones y realiza una petición `POST` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, 
+> Después con jQuery selecciona el botón para obtener el `id` del artículo y realiza una petición `DELETE` a la ruta `delete`. Esta debe devolver el total del carro y una vez finalizada la petición debes eliminar el contenedor del producto. Debes añadir un `id` al contenedor, por ejemplo, 
 {% raw %}
 ```twig
 id='item-{{item.id}}'
 ```
 {% endraw %}
 {% raw %}
+
 >
 > Si quieres darle un efecto de jQuery al eliminar el contenedor usa
 >
@@ -553,10 +583,4 @@ id='item-{{item.id}}'
 ## 3.5 Gestión de usuarios
 
 Crea las rutas `register`, `login` y `logout`. Protege la ruta `/admin` para que sólo puedan acceder los usuarios con rol `ADMIN` y modifica la barra de navegación.
-
-
-
-
-
-Hay un ejemplo más completo en [https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h](https://dev.to/qferrer/introduction-building-a-shopping-cart-with-symfony-f7h)
 
