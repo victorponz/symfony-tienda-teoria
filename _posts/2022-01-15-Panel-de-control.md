@@ -23,7 +23,7 @@ Vamos a crear un panel de control para nuestra aplicación.
 Para ello usaremos el bundle EasyAdmin de Symfony.
 
 ```
-composer require easycorp/easyadmin-bundle
+composer require easycorp/easyadmin-bundle:^4 -W
 ```
 
 Una vez instalado vamos a crear nuestro Dashboard
